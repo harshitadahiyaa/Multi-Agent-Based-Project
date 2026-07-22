@@ -18,7 +18,7 @@ def deduplicate_products(products):
     return unique_products
 
 
-def search_agent_node(state):
+def search_agent(state):
 
     query = state.get("query", "")
     errors = state.get("errors", []).copy()
