@@ -1,10 +1,24 @@
 from firecrawl import Firecrawl
+from pydantic import BaseModel, Field
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from utils.config import Settings
 from utils.constants import MAX_PRODUCTS_PER_SOURCE
 from utils.helpers import normalize_price
 
+class ExtractedProduct(BaseModel):
+    name: str = Field(description="Product name/title")
+    price: str = Field(description="Product price as shown on the page, e.g. '₹1,299'")
+    rating: Optional[float] = Field(default=0, description="Star rating out of 5, 0 if not shown")
+    reviews: Optional[int] = Field(default=0, description="Number of reviews/ratings, 0 if not shown")
+    delivery_info: Optional[str] = Field(default="", description="Delivery/shipping text shown on the page, as a single string")
+    brand: Optional[str] = Field(default="", description="Brand name if shown")
+    image_url: Optional[str] = Field(default="", description="Main product image URL")
+    url: Optional[str] = Field(default="", description="Product page URL")
+
+
+class ExtractedProductList(BaseModel):
+    products: List[ExtractedProduct] = Field(description="List of products found on the search results page")
 
 class FirecrawlService:
 
@@ -31,59 +45,54 @@ class FirecrawlService:
             url = url_template.format(query=query)
 
             try:
-                result = self.app.scrape_url(
+                result = self.app.scrape(
                     url,
-                    {
-                        "extractorOptions": {
-                            "mode": "llm-extraction",
-                            "extractionSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "products": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "name": {
-                                                    "type": "string"
-                                                },
-                                                "price": {
-                                                    "type": "string"
-                                                },
-                                                "rating": {
-                                                    "type": "number"
-                                                },
-                                                "image_url": {
-                                                    "type": "string"
-                                                },
-                                                "url": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                    formats=[
+                        {
+                            "type": "json",
+                            "schema": ExtractedProductList,
+                            "prompt": (
+                                "Extract every product listed on this e-commerce search "
+                                "results page, including its name, price, rating, number "
+                                "of reviews, delivery/shipping text, brand, main image URL, "
+                                "and the product page URL."
+                            ),
                         }
-                    }
+                    ],
                 )
 
-                if not result:
+                if not result or not getattr(result, "json", None):
                     continue
 
-                extracted = result.get("llm_extraction", {})
-                product_list = extracted.get("products", [])
+                extracted = result.json
+                product_list = extracted.get("products", []) if isinstance(extracted, dict) else []
 
                 for item in product_list[:MAX_PRODUCTS_PER_SOURCE]:
 
+                    raw_delivery = item.get("delivery_info", "")
+                    if isinstance(raw_delivery, list):
+                        delivery_info = ", ".join(str(v) for v in raw_delivery if v)
+                    elif raw_delivery is None:
+                        delivery_info = ""
+                    else:
+                        delivery_info = str(raw_delivery)
+
+                    raw_reviews = item.get("reviews", 0)
+                    if isinstance(raw_reviews, list):
+                        raw_reviews = raw_reviews[0] if raw_reviews else 0
+                    try:
+                        reviews = int(raw_reviews or 0)
+                    except (ValueError, TypeError):
+                        reviews = 0
+
                     product: Dict[str, Any] = {
-                        "name": item.get("name", "Unknown Product"),
+                        "name": str(item.get("name", "Unknown Product")),
                         "price": normalize_price(item.get("price", "")),
                         "rating": float(item.get("rating", 0) or 0),
-                        "reviews": int(item.get("reviews", 0) or 0),
-                        "delivery_info": item.get("delivery_info", ""),
-                        "brand": item.get("brand", ""),
-                        "specifications": item.get("specifications", {}),
+                        "reviews": reviews,
+                        "delivery_info": delivery_info,
+                        "brand": str(item.get("brand", "") or ""),
+                        "specifications": {},
                         "seller": store,
                         "source": store,
                         "url": item.get("url", ""),

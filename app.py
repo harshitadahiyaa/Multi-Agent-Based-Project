@@ -230,7 +230,7 @@ if matches_count > 0:
         cols = st.columns(3)
         for idx, p in enumerate(row_products):
             with cols[idx]:
-                is_bv = (best_value_url and p.url == best_value_url)
+                is_bv = (best_value_url and p.get("url") == best_value_url)
                 render_product_card(p, is_best_value=is_bv)
 else:
     st.info("No matching products found within the specified budget or brand filter. Try widening your criteria!")

@@ -56,10 +56,10 @@ Give a short comparison and recommend the best product.
 You are an AI Shopping Assistant.
 
 Recommended Product:
-Name: {recommended.name}
-Price: ₹{recommended.price}
-Rating: {recommended.rating}
-Source: {recommended.source}
+Name: {recommended.get('name', 'Unknown Product')}
+Price: ₹{recommended.get('price', 0)}
+Rating: {recommended.get('rating', 0)}
+Source: {recommended.get('source', 'Unknown')}
 
 Alternative Products:
 """

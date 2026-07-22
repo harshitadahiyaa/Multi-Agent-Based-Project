@@ -68,7 +68,10 @@ def render_progress_tracker(agent_status: Dict[str, str]):
                 else:
                     st.markdown('<div style="font-size:0.75rem; font-weight:600; color:#94a3b8; margin-top:0.25rem;">Pending</div>', unsafe_allow_html=True)
 
+
 def render_product_card(product: Dict[str, Any], is_best_value: bool = False):
+    
+    
     """Renders a single product card inside a native Streamlit container."""
     name = product.get("name", "Unknown Product")
     price = product.get("price", 0.0)
@@ -129,7 +132,7 @@ def render_product_card(product: Dict[str, Any], is_best_value: bool = False):
             rating_str = f"⭐ {rating:.1f}"
             if reviews > 0:
                 rating_str += f" ({reviews:,})"
-
+        delivery_info = product.get("delivery_info", "")
         # Normalize delivery_info to string
         if isinstance(delivery_info, list):
             delivery_info = ", ".join(str(item) for item in delivery_info)

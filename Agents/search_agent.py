@@ -9,9 +9,9 @@ def deduplicate_products(products):
     seen = set()
 
     for product in products:
-        name = product.name.strip().lower()
+        name = str(product.get("name", "")).strip().lower()
 
-        if name not in seen:
+        if name and name not in seen:
             seen.add(name)
             unique_products.append(product)
 
