@@ -1,18 +1,24 @@
 import asyncio
 import re
 
+from typing import List, Dict, Any
 from playwright.async_api import async_playwright
 
-from models.product import Product
 from utils.constants import MAX_PRODUCTS_PER_SOURCE
 from utils.helpers import normalize_price
 
 
 class FlipkartService:
 
-    async def _scrape_products(self, query):
+    async def _scrape_products(self, query: str) -> List[Dict[str, Any]]:
+        """Scrape products from Flipkart using Playwright."""
 
-        products = []
+        products: List[Dict[str, Any]] = []
+
+        query = query.strip()
+
+        if not query:
+            return products
 
         async with async_playwright() as p:
 
@@ -28,7 +34,7 @@ class FlipkartService:
 
             await page.goto(
                 f"https://www.flipkart.com/search?q={query}",
-                wait_until="networkidle"
+                wait_until="networkidle",
             )
 
             # Close login popup if present
@@ -56,23 +62,62 @@ class FlipkartService:
 
                     name = lines[0]
 
+                    # ---------------- Price ----------------
+
                     price_match = re.search(r"₹[\d,]+", text)
+
                     price = (
                         normalize_price(price_match.group())
                         if price_match
                         else 0.0
                     )
 
+                    # ---------------- Rating ----------------
+
                     rating_match = re.search(r"\b([0-5]\.?[0-9]?)\b", text)
+
                     rating = (
                         float(rating_match.group(1))
                         if rating_match
                         else 0.0
                     )
 
+                    # ---------------- Reviews ----------------
+
+                    reviews_match = re.search(
+                        r"([\d,]+)\s+Ratings",
+                        text,
+                        re.IGNORECASE,
+                    )
+
+                    reviews = (
+                        int(reviews_match.group(1).replace(",", ""))
+                        if reviews_match
+                        else 0
+                    )
+
+                    # ---------------- Delivery ----------------
+
+                    delivery_match = re.search(
+                        r"(Free delivery.*|Delivery.*|Tomorrow.*|Today.*)",
+                        text,
+                        re.IGNORECASE,
+                    )
+
+                    delivery = (
+                        delivery_match.group(1).strip()
+                        if delivery_match
+                        else ""
+                    )
+
+                    # ---------------- Image ----------------
+
                     image = await card.locator("img").first.get_attribute("src")
 
+                    # ---------------- URL ----------------
+
                     href = ""
+
                     links = await card.locator("a").all()
 
                     for link in links:
@@ -84,24 +129,32 @@ class FlipkartService:
                     if href and not href.startswith("http"):
                         href = "https://www.flipkart.com" + href
 
-                    products.append(
-                        Product(
-                            name=name,
-                            price=price,
-                            rating=rating,
-                            seller="Flipkart",
-                            source="Flipkart",
-                            url=href,
-                            image_url=image or "",
-                        )
-                    )
+                    # ---------------- Product Dictionary ----------------
 
-                except Exception:
+                    product: Dict[str, Any] = {
+                        "name": name,
+                        "price": price,
+                        "rating": rating,
+                        "reviews": reviews,
+                        "delivery_info": delivery,
+                        "brand": "",
+                        "specifications": {},
+                        "seller": "Flipkart",
+                        "source": "Flipkart",
+                        "url": href,
+                        "image_url": image or "",
+                    }
+
+                    products.append(product)
+
+                except Exception as e:
+                    print(f"Flipkart Error: {e}")
                     continue
 
             await browser.close()
 
         return products
 
-    def search(self, query):
+    def search(self, query: str) -> List[Dict[str, Any]]:
+        """Search products from Flipkart."""
         return asyncio.run(self._scrape_products(query))

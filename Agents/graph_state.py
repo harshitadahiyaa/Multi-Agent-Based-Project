@@ -1,5 +1,4 @@
 from typing import TypedDict, List, Dict, Any
-from models.product import Product
 
 
 class ProductComparisonState(TypedDict, total=False):
@@ -24,3 +23,4 @@ class ProductComparisonState(TypedDict, total=False):
     # ---- shared / updated by every node ----
     agent_status: Dict[str, str]
     errors: List[str]
+

@@ -1,5 +1,5 @@
 import streamlit as st
-from typing import Dict, Any, List
+from typing import Dict, Any
 from frontend.helpers import get_pricing_details
 from utils.helpers import format_currency
 
@@ -70,14 +70,14 @@ def render_progress_tracker(agent_status: Dict[str, str]):
 
 def render_product_card(product: Dict[str, Any], is_best_value: bool = False):
     """Renders a single product card inside a native Streamlit container."""
-    name = getattr(product, "name", "Unknown Product")
-    price = getattr(product, "price", 0.0)
-    rating = getattr(product, "rating", 0.0)
-    reviews = getattr(product, "reviews", 0)
-    source = getattr(product, "source", "Unknown").lower()
-    delivery_info = getattr(product, "delivery_info", "")
-    url = getattr(product, "url", "#")
-    image_url = getattr(product, "image_url", "")
+    name = product.get("name", "Unknown Product")
+    price = product.get("price", 0.0)
+    rating = product.get("rating", 0.0)
+    reviews = product.get("reviews", 0)
+    source = product.get("source", "Unknown").lower()
+    delivery_info = product.get("delivery_info", "")
+    url = product.get("url", "#")
+    image_url = product.get("image_url", "")
 
     with st.container(border=True):
         # Product Card Anchor for styles.py to target
@@ -129,12 +129,26 @@ def render_product_card(product: Dict[str, Any], is_best_value: bool = False):
             rating_str = f"⭐ {rating:.1f}"
             if reviews > 0:
                 rating_str += f" ({reviews:,})"
-                
-        meta_str = f"<span style='color:#64748b; font-size:0.8rem; font-weight:500;'>{rating_str}"
+
+        # Normalize delivery_info to string
+        if isinstance(delivery_info, list):
+            delivery_info = ", ".join(str(item) for item in delivery_info)
+        elif delivery_info is None:
+            delivery_info = ""
+        else:
+            delivery_info = str(delivery_info)
+
+        meta_str = (
+            "<span style='color:#64748b; font-size:0.8rem; "
+            "font-weight:500;'>"
+        )
+        meta_str += rating_str
+
         if delivery_info:
             if rating_str:
                 meta_str += " | "
             meta_str += delivery_info
+
         meta_str += "</span>"
         
         st.markdown(meta_str, unsafe_allow_html=True)
@@ -145,18 +159,14 @@ def render_product_card(product: Dict[str, Any], is_best_value: bool = False):
 
 def render_recommendation_section(recommendation: Dict[str, Any]):
     """Renders the AI recommendation card using a native Streamlit container and metrics."""
-    name = getattr(recommendation, "name", "Unknown Product")
-    price = getattr(recommendation, "price", 0.0)
-    rating = getattr(recommendation, "rating", 0.0)
-    reviews = getattr(recommendation, "reviews", 0)
-    why = getattr(
-        recommendation,
-        "why",
-        "Highly recommended based on your preferences."
-    )
-    url = getattr(recommendation, "url", "#")
-    source = getattr(recommendation, "source", "Amazon")    
-    
+    name = recommendation.get("name", "Unknown Product")
+    price = recommendation.get("price", 0.0)
+    rating = recommendation.get("rating", 0.0)
+    reviews = recommendation.get("reviews", 0)
+    why = recommendation.get("why", "Highly recommended based on your preferences.")
+    url = recommendation.get("url", "#")
+    source = recommendation.get("source", "Amazon")
+       
     with st.container(border=True):
         # Anchor tag to allow styles.py to apply the purple background styling
         st.markdown('<div class="rec-card-anchor"></div>', unsafe_allow_html=True)
