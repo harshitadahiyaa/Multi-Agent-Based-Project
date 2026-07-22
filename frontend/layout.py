@@ -73,7 +73,7 @@ def render_sidebar_filters() -> Tuple[str, float, str, bool]:
 
         brand_filter = (
             ""
-            if selected_brand == "All Brands"
+            if selected_brand == "Brands"
             else selected_brand
         )
 
