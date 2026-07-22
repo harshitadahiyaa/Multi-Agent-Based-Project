@@ -34,7 +34,8 @@ class FlipkartService:
 
             await page.goto(
                 f"https://www.flipkart.com/search?q={query}",
-                wait_until="networkidle",
+                wait_until="commit",
+                timeout=60000,
             )
 
             # Close login popup if present
@@ -42,6 +43,11 @@ class FlipkartService:
                 await page.locator("button:has-text('✕')").click(timeout=3000)
             except Exception:
                 pass
+
+            try:
+                await page.wait_for_selector("div[data-id]", timeout=15000)
+            except Exception:
+                print("Flipkart: no product cards appeared in time")
 
             cards = await page.locator("div[data-id]").all()
 

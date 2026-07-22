@@ -41,13 +41,12 @@ class FirecrawlService:
             return products
 
         for store, url_template in self.STORES.items():
-
             url = url_template.format(query=query)
 
             try:
-                result = self.app.scrape(
-                    url,
-                    formats=[
+                scrape_kwargs = {
+                    "url": url,
+                    "formats": [
                         {
                             "type": "json",
                             "schema": ExtractedProductList,
@@ -59,7 +58,18 @@ class FirecrawlService:
                             ),
                         }
                     ],
-                )
+                }
+
+                if store == "Reliance Digital":
+                    scrape_kwargs["actions"] = [
+                        {"type": "wait", "milliseconds": 3000},
+                        {"type": "click", "selector": "input[placeholder*='Search' i]"},
+                        {"type": "write", "text": query},
+                        {"type": "press", "key": "Enter"},
+                        {"type": "wait", "milliseconds": 5000},
+                    ]
+
+                result = self.app.scrape(**scrape_kwargs)
 
                 if not result or not getattr(result, "json", None):
                     continue
