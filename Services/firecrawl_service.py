@@ -23,7 +23,6 @@ class ExtractedProductList(BaseModel):
 class FirecrawlService:
 
     STORES = {
-        "Croma": "https://www.croma.com/searchB?q={query}",
         "Reliance Digital": "https://www.reliancedigital.in/search?q={query}"
     }
 
