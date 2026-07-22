@@ -31,22 +31,30 @@ def search_agent_node(state):
 
     # Amazon Search
     try:
-        products.extend(amazon.search(query))
+        amazon_products = amazon.search(query)
+        print("Amazon products:", len(amazon_products))
+        products.extend(amazon_products)
     except Exception as e:
+        print("Amazon Error:", e)
         errors.append(f"Amazon search failed: {e}")
 
     # Flipkart Search
     try:
         print("Calling Flipkart...")
-        products.extend(flipkart.search(query))
+        flipkart_products = flipkart.search(query)
+        print("Flipkart products:", len(flipkart_products))
+        products.extend(flipkart_products)
     except Exception as e:
         print("Flipkart Error:", e)
         errors.append(f"Flipkart search failed: {e}")
 
-    # Other Stores Search
+    # Firecrawl Search
     try:
-        products.extend(firecrawl.search(query))
+        firecrawl_products = firecrawl.search(query)
+        print("Firecrawl products:", len(firecrawl_products))
+        products.extend(firecrawl_products)
     except Exception as e:
+        print("Firecrawl Error:", e)
         errors.append(f"Other store search failed: {e}")
 
     # Remove duplicate products
