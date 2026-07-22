@@ -45,7 +45,7 @@ class AmazonService:
                     price=price,
                     rating=float(item.get("rating", 0) or 0),
                     reviews=int(item.get("reviews", 0) or 0),
-                    delivery_info=item.get("delivery", "") or "",
+                    delivery_info=", ".join(item.get("delivery", [])) if isinstance(item.get("delivery"), list) else (item.get("delivery", "") or ""),
                     seller=item.get("seller", "Amazon"),
                     image_url=item.get("thumbnail", ""),
                     url=item.get("link", ""),

@@ -205,7 +205,7 @@ for src_list in by_source_groups.values():
     display_products.extend(src_list)
 
 # Sort display products by value score (highest value score first)
-display_products.sort(key=lambda x: x.get("value_score", 0.0), reverse=True)
+display_products.sort(key=lambda x: getattr(x, "value_score", 0.0), reverse=True)
 
 matches_count = len(display_products)
 
@@ -221,7 +221,7 @@ st.markdown('<hr style="margin-top:-0.5rem; margin-bottom:1.5rem; border:0; bord
 # Display product cards
 if matches_count > 0:
     best_value_prod = comparison_data.get("best_value")
-    best_value_url = best_value_prod.get("url") if best_value_prod else None
+    best_value_url = best_value_prod.url if best_value_prod else None
 
     # show products in rows of three
     for i in range(0, len(display_products), 3):
@@ -229,7 +229,7 @@ if matches_count > 0:
         cols = st.columns(3)
         for idx, p in enumerate(row_products):
             with cols[idx]:
-                is_bv = (best_value_url and p.get("url") == best_value_url)
+                is_bv = (best_value_url and p.url == best_value_url)
                 render_product_card(p, is_best_value=is_bv)
 else:
     st.info("No matching products found within the specified budget or brand filter. Try widening your criteria!")
